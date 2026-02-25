@@ -1,5 +1,9 @@
 k8s fundamentals:
 
+definition: running containers at scale
+
+the sytem can scale based on the cpu usage
+
 ## The Problem Before Kubernetes
 Imagine This (2014 era)
 
