@@ -208,4 +208,4 @@ Worker Node	Runs apps
 Kubelet	Executes instructions
 Kube-proxy	Handles networking
 Pod	Smallest deployable unit
-Kubectl	Command tool
+Kubectl	Command tool.
