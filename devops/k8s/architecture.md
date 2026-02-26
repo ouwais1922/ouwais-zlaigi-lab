@@ -203,7 +203,7 @@ Master Node	Brain
 API Server	Front door
 ETCD	Database
 Controller	Keeps things correct
-Scheduler	Chooses where to run
+Scheduler	assign pod to a node
 Worker Node	Runs apps
 Kubelet	Executes instructions
 Kube-proxy	Handles networking
