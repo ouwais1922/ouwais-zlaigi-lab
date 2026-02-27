@@ -135,3 +135,11 @@ kubectl scale deployment backend --replicas=10
 | Creates ReplicaSet          | ❌ No                             | ✅ Yes                        |
 | Used directly in production | Rarely                           | Very common                  |
 | Recommended for apps        | ❌ Not directly                   | ✅ Yes                        |
+
+deployment:
+
+A Deployment is a Kubernetes object that manages and maintains a desired number of identical Pods, while providing features like scaling, rolling updates, and rollbacks.
+
+replicaset:
+
+A ReplicaSet is a Kubernetes object that ensures a specified number of identical Pods are running at all times.
