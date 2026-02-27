@@ -11,3 +11,4 @@ A Kubernetes object that ensures a specified number of identical Pods are always
 A Namespace 
 is a logical separation inside a Kubernetes cluster.
 It allows you to divide one cluster into multiple isolated environments.
+ideally each application should have it own namespace
