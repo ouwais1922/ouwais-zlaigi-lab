@@ -6,3 +6,8 @@ A Kubernetes object that manages Pods and ensures the desired number of replicas
 
 ReplicaSet
 A Kubernetes object that ensures a specified number of identical Pods are always running.
+
+
+A Namespace 
+is a logical separation inside a Kubernetes cluster.
+It allows you to divide one cluster into multiple isolated environments.
