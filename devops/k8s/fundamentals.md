@@ -121,3 +121,17 @@ Traffic is load balanced
 You can scale with one command:
 
 kubectl scale deployment backend --replicas=10
+
+
+| Feature                     | ReplicaSet                       | Deployment                   |
+| --------------------------- | -------------------------------- | ---------------------------- |
+| Purpose                     | Maintains a fixed number of Pods | Manages ReplicaSets and Pods |
+| Manages Pods                | ✅ Yes                            | ✅ Yes (indirectly)           |
+| Ensures replicas            | ✅ Yes                            | ✅ Yes                        |
+| Self-healing                | ✅ Yes (recreates Pods)           | ✅ Yes                        |
+| Rolling updates             | ❌ No                             | ✅ Yes                        |
+| Rollbacks                   | ❌ No                             | ✅ Yes                        |
+| Version management          | ❌ No                             | ✅ Yes                        |
+| Creates ReplicaSet          | ❌ No                             | ✅ Yes                        |
+| Used directly in production | Rarely                           | Very common                  |
+| Recommended for apps        | ❌ Not directly                   | ✅ Yes                        |
