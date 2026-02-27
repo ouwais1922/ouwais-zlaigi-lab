@@ -12,3 +12,7 @@ A Namespace
 is a logical separation inside a Kubernetes cluster.
 It allows you to divide one cluster into multiple isolated environments.
 ideally each application should have it own namespace
+
+
+
+Port-forward is a Kubernetes command that creates a temporary tunnel between a local port on your machine and a port on a Pod or Service inside the cluster.
