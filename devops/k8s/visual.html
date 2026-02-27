@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>KubeSnap Report — cluster-prod (snapshot)</title>
+
+    <!-- Mermaid (for the topology diagram). For fully offline reports, you can bundle this JS instead of CDN. -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #0f1730;
+        --panel2: #0c1328;
+        --text: #e8eefc;
+        --muted: #a9b4d6;
+        --border: rgba(255, 255, 255, 0.08);
+        --good: #2ecc71;
+        --warn: #f1c40f;
+        --bad: #e74c3c;
+        --info: #6aa7ff;
+        --chip: rgba(255, 255, 255, 0.08);
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        --radius: 16px;
+        --mono:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+        --sans:
+          ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        color: var(--text);
+        background:
+          radial-gradient(
+            1200px 600px at 20% 10%,
+            rgba(106, 167, 255, 0.18),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 500px at 80% 30%,
+            rgba(241, 196, 15, 0.1),
+            transparent 65%
+          ),
+          var(--bg);
+      }
+      a {
+        color: inherit;
+      }
+      header {
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: linear-gradient(
+          to bottom,
+          rgba(11, 16, 32, 0.95),
+          rgba(11, 16, 32, 0.8)
+        );
+        backdrop-filter: blur(10px);
+        z-index: 10;
+      }
+      .title-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .title {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+      .subtitle {
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .chip {
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        background: var(--chip);
+        border-radius: 999px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      button {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: none;
+        transition:
+          transform 0.08s ease,
+          background 0.12s ease;
+      }
+      button:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      button:active {
+        transform: scale(0.98);
+      }
+      .btn-primary {
+        border-color: rgba(106, 167, 255, 0.35);
+        background: rgba(106, 167, 255, 0.12);
+      }
+      .btn-primary:hover {
+        background: rgba(106, 167, 255, 0.18);
+      }
+      .container {
+        display: grid;
+        grid-template-columns: 330px 1fr 360px;
+        gap: 16px;
+        padding: 16px;
+        align-items: start;
+      }
+      @media (max-width: 1100px) {
+        .container {
+          grid-template-columns: 1fr;
+        }
+      }
+      .panel {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.02)
+        );
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .panel-header {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .panel-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .panel-body {
+        padding: 14px 16px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.12);
+        border-radius: 14px;
+        padding: 12px;
+      }
+      .metric {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .metric .label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .metric .value {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+      .bar {
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .bar > span {
+        display: block;
+        height: 100%;
+        width: 50%;
+        background: rgba(106, 167, 255, 0.65);
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 8px;
+        font-size: 13px;
+      }
+      .kv div:nth-child(odd) {
+        color: var(--muted);
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--info);
+      }
+      .dot.good {
+        background: var(--good);
+      }
+      .dot.warn {
+        background: var(--warn);
+      }
+      .dot.bad {
+        background: var(--bad);
+      }
+
+      .search {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        color: var(--text);
+        outline: none;
+        font-size: 13px;
+      }
+
+      .list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.14);
+        cursor: pointer;
+        transition:
+          background 0.12s ease,
+          transform 0.06s ease;
+      }
+      .row:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .row:active {
+        transform: scale(0.99);
+      }
+      .row .left {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+      .row .name {
+        font-weight: 700;
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .row .meta {
+        font-size: 12px;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .badge {
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        white-space: nowrap;
+      }
+      .badge.good {
+        border-color: rgba(46, 204, 113, 0.35);
+        background: rgba(46, 204, 113, 0.12);
+      }
+      .badge.warn {
+        border-color: rgba(241, 196, 15, 0.35);
+        background: rgba(241, 196, 15, 0.12);
+      }
+      .badge.bad {
+        border-color: rgba(231, 76, 60, 0.35);
+        background: rgba(231, 76, 60, 0.12);
+      }
+
+      .diagram-wrap {
+        padding: 14px 16px 18px;
+      }
+      .diagram {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.14);
+        padding: 12px;
+        overflow: auto;
+        min-height: 520px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.12);
+        font-size: 13px;
+      }
+      thead th {
+        text-align: left;
+        padding: 10px 12px;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        font-weight: 700;
+        font-size: 12px;
+      }
+      tbody td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        vertical-align: top;
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .statusline {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      footer {
+        padding: 14px 16px 18px;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="title-row">
+        <div class="title">
+          <h1>KubeSnap Report</h1>
+          <div class="subtitle">
+            <span class="chip"><span class="mono">cluster-prod</span></span>
+            <span class="chip"
+              >Context: <span class="mono">gke_company_eu-prod</span></span
+            >
+            <span class="chip"
+              >Generated:
+              <span class="mono" id="generatedAt"
+                >2026-02-27T14:05:12Z</span
+              ></span
+            >
+            <span class="chip">Mode: snapshot (static)</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button onclick="downloadJSON()">Download snapshot.json</button>
+          <button class="btn-primary" onclick="window.print()">
+            Print / Save PDF
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- LEFT: Summary / Filters -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Summary</div>
+          <span class="pill"><span class="dot good"></span> Healthy</span>
+        </div>
+        <div class="panel-body split">
+          <div class="grid-2">
+            <div class="card metric">
+              <div class="label">Nodes</div>
+              <div class="value" id="mNodes">5</div>
+              <div class="bar"><span style="width: 100%"></span></div>
+            </div>
+            <div class="card metric">
+              <div class="label">Namespaces</div>
+              <div class="value" id="mNamespaces">12</div>
+              <div class="bar"><span style="width: 72%"></span></div>
+            </div>
+            <div class="card metric">
+              <div class="label">Pods Running</div>
+              <div class="value" id="mPodsRunning">143</div>
+              <div class="bar"><span style="width: 92%"></span></div>
+            </div>
+            <div class="card metric">
+              <div class="label">Pods Not OK</div>
+              <div class="value" id="mPodsBad">7</div>
+              <div class="bar"><span style="width: 12%"></span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="panel-title" style="margin-bottom: 10px">Filters</div>
+            <input
+              class="search"
+              id="filterInput"
+              placeholder="Filter workloads (name / namespace)..."
+              oninput="renderWorkloadList()"
+            />
+            <div
+              style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px"
+            >
+              <span class="pill"><span class="dot"></span> All</span>
+              <span class="pill"><span class="dot warn"></span> Degraded</span>
+              <span class="pill"><span class="dot bad"></span> Failed</span>
+              <span class="pill"><span class="dot good"></span> Healthy</span>
+            </div>
+            <div class="small" style="margin-top: 10px">
+              Tip: in your CLI you can support
+              <span class="mono">--namespace</span>,
+              <span class="mono">--selector</span>, and
+              <span class="mono">--only-unhealthy</span>.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="panel-title" style="margin-bottom: 10px">
+              Snapshot metadata
+            </div>
+            <div class="kv">
+              <div>Collector</div>
+              <div class="mono">kubesnap v0.1.0</div>
+              <div>API server</div>
+              <div class="mono">https://10.0.0.1</div>
+              <div>RBAC</div>
+              <div>Read-only (pods, nodes, workloads, events)</div>
+              <div>Duration</div>
+              <div class="mono">1.42s</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CENTER: Diagram -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Topology</div>
+          <span class="pill"
+            ><span class="dot"></span> Nodes → Workloads → Pods</span
+          >
+        </div>
+        <div class="diagram-wrap">
+          <div class="diagram">
+            <pre class="mermaid" id="mermaidDiagram"></pre>
+          </div>
+          <div class="small" style="margin-top: 10px">
+            This diagram is a snapshot. Run the CLI again to generate a new
+            report.
+          </div>
+        </div>
+
+        <div class="panel-body" style="padding-top: 0">
+          <div class="panel-title" style="margin-bottom: 10px">
+            Pods requiring attention
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Pod</th>
+                <th>Namespace</th>
+                <th>Reason</th>
+                <th>Node</th>
+                <th>Restarts</th>
+              </tr>
+            </thead>
+            <tbody id="badPodsTable"></tbody>
+          </table>
+        </div>
+
+        <footer>
+          Generated by <span class="mono">kubesnap</span> • snapshot file is
+          safe to share if you avoid embedding secrets/logs.
+        </footer>
+      </section>
+
+      <!-- RIGHT: Workloads & Details -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Workloads</div>
+          <span class="pill"><span class="dot"></span> Click to inspect</span>
+        </div>
+        <div class="panel-body">
+          <div id="workloadList" class="list"></div>
+        </div>
+
+        <div class="panel-header">
+          <div class="panel-title">Details</div>
+          <span class="pill"><span class="dot"></span> Selected workload</span>
+        </div>
+        <div class="panel-body" id="details">
+          <div class="card">
+            <div class="panel-title" style="margin-bottom: 10px">
+              Select a workload
+            </div>
+            <div class="small">
+              Click a workload on the left to see pods, conditions, images, and
+              recent events.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // ---- Fake snapshot data (replace with JSON generated from the cluster) ----
+      const snapshot = {
+        meta: {
+          cluster: "cluster-prod",
+          context: "gke_company_eu-prod",
+          generatedAt: new Date().toISOString(),
+          version: "kubesnap v0.1.0",
+        },
+        summary: { nodes: 5, namespaces: 12, podsRunning: 143, podsBad: 7 },
+        nodes: [
+          { name: "worker-a", ready: true },
+          { name: "worker-b", ready: true },
+          { name: "worker-c", ready: true },
+          { name: "worker-d", ready: true },
+          { name: "worker-e", ready: false },
+        ],
+        workloads: [
+          {
+            kind: "Deployment",
+            namespace: "payments",
+            name: "api",
+            status: "degraded",
+            desiredReplicas: 6,
+            readyReplicas: 5,
+            pods: [
+              {
+                name: "api-7f6c9b9c5f-2n8kc",
+                node: "worker-a",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "api-7f6c9b9c5f-bk2xm",
+                node: "worker-b",
+                phase: "Running",
+                restarts: 1,
+              },
+              {
+                name: "api-7f6c9b9c5f-f72jj",
+                node: "worker-c",
+                phase: "CrashLoopBackOff",
+                restarts: 9,
+                reason: "CrashLoopBackOff",
+              },
+              {
+                name: "api-7f6c9b9c5f-ktqcw",
+                node: "worker-d",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "api-7f6c9b9c5f-mp4xz",
+                node: "worker-a",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "api-7f6c9b9c5f-w8k7p",
+                node: "worker-b",
+                phase: "Running",
+                restarts: 0,
+              },
+            ],
+            notes: ["1 pod CrashLoopBackOff"],
+            recentEvents: [
+              {
+                type: "Warning",
+                reason: "BackOff",
+                message: "Back-off restarting failed container",
+                ts: "2m ago",
+              },
+              {
+                type: "Normal",
+                reason: "Pulled",
+                message: "Successfully pulled image",
+                ts: "6m ago",
+              },
+            ],
+          },
+          {
+            kind: "StatefulSet",
+            namespace: "payments",
+            name: "postgres",
+            status: "healthy",
+            desiredReplicas: 3,
+            readyReplicas: 3,
+            pods: [
+              {
+                name: "postgres-0",
+                node: "worker-c",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "postgres-1",
+                node: "worker-d",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "postgres-2",
+                node: "worker-a",
+                phase: "Running",
+                restarts: 0,
+              },
+            ],
+            notes: ["All replicas ready"],
+            recentEvents: [],
+          },
+          {
+            kind: "DaemonSet",
+            namespace: "kube-system",
+            name: "cni-plugin",
+            status: "degraded",
+            desiredReplicas: 5,
+            readyReplicas: 4,
+            pods: [
+              {
+                name: "cni-plugin-9m2ks",
+                node: "worker-a",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "cni-plugin-0xpqz",
+                node: "worker-b",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "cni-plugin-v1m8p",
+                node: "worker-c",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "cni-plugin-xr7zq",
+                node: "worker-d",
+                phase: "Running",
+                restarts: 0,
+              },
+              {
+                name: "cni-plugin-zzzz1",
+                node: "worker-e",
+                phase: "Pending",
+                restarts: 0,
+                reason: "NodeNotReady",
+              },
+            ],
+            notes: ["worker-e NotReady"],
+            recentEvents: [
+              {
+                type: "Warning",
+                reason: "FailedScheduling",
+                message: "0/1 nodes are available: node(s) not ready.",
+                ts: "4m ago",
+              },
+            ],
+          },
+          {
+            kind: "Job",
+            namespace: "data",
+            name: "daily-etl-2026-02-27",
+            status: "failed",
+            desiredReplicas: 1,
+            readyReplicas: 0,
+            pods: [
+              {
+                name: "daily-etl-2026-02-27-4k7fd",
+                node: "worker-b",
+                phase: "Error",
+                restarts: 2,
+                reason: "OOMKilled",
+              },
+            ],
+            notes: ["Job failed: OOMKilled"],
+            recentEvents: [
+              {
+                type: "Warning",
+                reason: "OOMKilled",
+                message: "Container was killed due to memory usage",
+                ts: "12m ago",
+              },
+            ],
+          },
+        ],
+      };
+
+      // ---- Render header metrics ----
+      document.getElementById("generatedAt").textContent =
+        snapshot.meta.generatedAt;
+      document.getElementById("mNodes").textContent = snapshot.summary.nodes;
+      document.getElementById("mNamespaces").textContent =
+        snapshot.summary.namespaces;
+      document.getElementById("mPodsRunning").textContent =
+        snapshot.summary.podsRunning;
+      document.getElementById("mPodsBad").textContent =
+        snapshot.summary.podsBad;
+
+      // ---- Build Mermaid diagram (simple topology snapshot) ----
+      // You can improve this to include Services/Ingress/HPA, or group by namespace.
+      function buildMermaid() {
+        const lines = [];
+        lines.push("flowchart LR");
+        lines.push("  %% KubeSnap snapshot topology");
+        lines.push(
+          "  classDef good fill:#0b2a1a,stroke:#2ecc71,color:#e8eefc,stroke-width:1px;",
+        );
+        lines.push(
+          "  classDef warn fill:#2a240b,stroke:#f1c40f,color:#e8eefc,stroke-width:1px;",
+        );
+        lines.push(
+          "  classDef bad  fill:#2a0f0b,stroke:#e74c3c,color:#e8eefc,stroke-width:1px;",
+        );
+        lines.push(
+          "  classDef info fill:#0b1a2a,stroke:#6aa7ff,color:#e8eefc,stroke-width:1px;",
+        );
+
+        // Nodes
+        snapshot.nodes.forEach((n) => {
+          const id = `node_${safe(n.name)}`;
+          lines.push(`  ${id}(["Node: ${n.name}"])`);
+          lines.push(`  class ${id} ${n.ready ? "good" : "bad"};`);
+        });
+
+        // Workloads and pods
+        snapshot.workloads.forEach((w) => {
+          const wid = `wl_${safe(w.namespace)}_${safe(w.name)}`;
+          lines.push(
+            `  ${wid}["${w.kind}: ${w.namespace}/${w.name}\\n${w.readyReplicas}/${w.desiredReplicas} ready"]`,
+          );
+          lines.push(
+            `  class ${wid} ${w.status === "healthy" ? "good" : w.status === "degraded" ? "warn" : "bad"};`,
+          );
+
+          // Attach workload to nodes (based on pod placement)
+          w.pods.forEach((p) => {
+            const pid = `pod_${safe(w.namespace)}_${safe(p.name)}`;
+            lines.push(`  ${pid}("Pod: ${p.name}\\n${p.phase}")`);
+            const cls =
+              p.phase === "Running"
+                ? "good"
+                : p.phase === "Pending"
+                  ? "warn"
+                  : "bad";
+            lines.push(`  class ${pid} ${cls};`);
+
+            // Workload owns pod
+            lines.push(`  ${wid} --> ${pid}`);
+
+            // Pod scheduled on node
+            const nid = `node_${safe(p.node)}`;
+            lines.push(`  ${nid} --- ${pid}`);
+          });
+        });
+
+        return lines.join("\n");
+      }
+
+      function safe(s) {
+        return String(s).replace(/[^a-zA-Z0-9_]/g, "_");
+      }
+
+      // Mermaid init
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "dark",
+        securityLevel: "loose",
+      });
+
+      const diagramEl = document.getElementById("mermaidDiagram");
+      diagramEl.textContent = buildMermaid();
+      mermaid.run({ querySelector: "#mermaidDiagram" });
+
+      // ---- Render "bad pods" table ----
+      function renderBadPods() {
+        const bad = [];
+        snapshot.workloads.forEach((w) => {
+          w.pods.forEach((p) => {
+            if (p.phase !== "Running")
+              bad.push({
+                ...p,
+                namespace: w.namespace,
+                workload: `${w.kind}/${w.name}`,
+              });
+          });
+        });
+
+        const tbody = document.getElementById("badPodsTable");
+        tbody.innerHTML =
+          bad
+            .map((p) => {
+              const s = statusBadge(p.phase);
+              return `
+        <tr>
+          <td>${s}</td>
+          <td><div class="mono">${escapeHtml(p.name)}</div><div class="small">${escapeHtml(p.workload)}</div></td>
+          <td class="mono">${escapeHtml(p.namespace)}</td>
+          <td>${escapeHtml(p.reason || p.phase)}</td>
+          <td class="mono">${escapeHtml(p.node)}</td>
+          <td class="mono">${Number(p.restarts || 0)}</td>
+        </tr>
+      `;
+            })
+            .join("") ||
+          `<tr><td colspan="6" class="small">No unhealthy pods in this snapshot 🎉</td></tr>`;
+      }
+
+      function statusBadge(phase) {
+        const cls =
+          phase === "Running" ? "good" : phase === "Pending" ? "warn" : "bad";
+        const dot =
+          phase === "Running" ? "good" : phase === "Pending" ? "warn" : "bad";
+        return `<span class="statusline"><span class="dot ${dot}"></span><span class="badge ${cls}">${escapeHtml(phase)}</span></span>`;
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      renderBadPods();
+
+      // ---- Workload list + details panel ----
+      function renderWorkloadList() {
+        const q = (document.getElementById("filterInput").value || "")
+          .toLowerCase()
+          .trim();
+        const list = document.getElementById("workloadList");
+
+        const items = snapshot.workloads
+          .filter(
+            (w) =>
+              !q ||
+              `${w.namespace}/${w.name}`.toLowerCase().includes(q) ||
+              w.kind.toLowerCase().includes(q),
+          )
+          .map((w) => {
+            const badgeCls =
+              w.status === "healthy"
+                ? "good"
+                : w.status === "degraded"
+                  ? "warn"
+                  : "bad";
+            const badgeText = w.status.toUpperCase();
+            const subtitle = `${w.kind} • ${w.namespace} • ${w.readyReplicas}/${w.desiredReplicas} ready`;
+            return `
+          <div class="row" onclick='selectWorkload("${w.namespace}", "${w.name}")'>
+            <div class="left">
+              <div class="name">${escapeHtml(w.name)}</div>
+              <div class="meta">${escapeHtml(subtitle)}</div>
+            </div>
+            <span class="badge ${badgeCls}">${badgeText}</span>
+          </div>
+        `;
+          });
+
+        list.innerHTML =
+          items.join("") ||
+          `<div class="small">No workloads match this filter.</div>`;
+      }
+
+      function selectWorkload(namespace, name) {
+        const w = snapshot.workloads.find(
+          (x) => x.namespace === namespace && x.name === name,
+        );
+        if (!w) return;
+
+        const badgeCls =
+          w.status === "healthy"
+            ? "good"
+            : w.status === "degraded"
+              ? "warn"
+              : "bad";
+        const notes = (w.notes || [])
+          .map(
+            (n) =>
+              `<span class="pill"><span class="dot ${w.status === "healthy" ? "good" : w.status === "degraded" ? "warn" : "bad"}"></span>${escapeHtml(n)}</span>`,
+          )
+          .join(" ");
+        const pods = (w.pods || [])
+          .map((p) => {
+            const cls =
+              p.phase === "Running"
+                ? "good"
+                : p.phase === "Pending"
+                  ? "warn"
+                  : "bad";
+            return `
+        <div class="row" style="cursor:default;">
+          <div class="left">
+            <div class="name mono">${escapeHtml(p.name)}</div>
+            <div class="meta">Node: <span class="mono">${escapeHtml(p.node)}</span> • Restarts: <span class="mono">${Number(p.restarts || 0)}</span></div>
+          </div>
+          <span class="badge ${cls}">${escapeHtml(p.phase)}</span>
+        </div>
+      `;
+          })
+          .join("");
+
+        const events = (w.recentEvents || []).length
+          ? `<div class="card" style="margin-top:12px;">
+           <div class="panel-title" style="margin-bottom:10px;">Recent events</div>
+           ${(w.recentEvents || [])
+             .map(
+               (e) => `
+              <div class="small" style="margin-bottom:8px;">
+                <span class="pill"><span class="dot ${e.type === "Warning" ? "warn" : "good"}"></span>${escapeHtml(e.type)}</span>
+                <span class="mono">${escapeHtml(e.reason)}</span> • ${escapeHtml(e.ts)}<br/>
+                ${escapeHtml(e.message)}
+              </div>
+           `,
+             )
+             .join("")}
+         </div>`
+          : `<div class="card" style="margin-top:12px;">
+           <div class="panel-title" style="margin-bottom:6px;">Recent events</div>
+           <div class="small">No events captured for this workload in this snapshot.</div>
+         </div>`;
+
+        document.getElementById("details").innerHTML = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+          <div>
+            <div class="panel-title">${escapeHtml(w.kind)}: <span class="mono">${escapeHtml(w.namespace)}/${escapeHtml(w.name)}</span></div>
+            <div class="small" style="margin-top:6px;">Replicas: <span class="mono">${w.readyReplicas}/${w.desiredReplicas}</span></div>
+          </div>
+          <span class="badge ${badgeCls}">${escapeHtml(w.status.toUpperCase())}</span>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          ${notes || `<span class="small">No notes</span>`}
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="panel-title" style="margin-bottom:10px;">Pods</div>
+        <div class="list" style="margin-top:0;">${pods || `<div class="small">No pods found.</div>`}</div>
+      </div>
+
+      ${events}
+    `;
+      }
+
+      renderWorkloadList();
+      selectWorkload("payments", "api"); // default selection
+
+      // ---- Export JSON ----
+      function downloadJSON() {
+        const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "snapshot.json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+    </script>
+  </body>
+</html>
